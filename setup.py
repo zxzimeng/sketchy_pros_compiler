@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="sketchy_pros_compiler",
-    version="1.0.1",
+    version="1.0.2",
     scripts=['pros_sketchy'],
     description="A build system wrapper for PROS robotics projects",
     long_description=open('README.md').read(),
