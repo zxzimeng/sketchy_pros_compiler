@@ -66,50 +66,46 @@ Binary size: 6728KB (bin/hot.package.elf)
 ## Example Structure:
 
 ```plaintext
-❯ tree -r 
+❯ tree -r
 .
 ├── softstorage
-│   ├── pid_tune_assist
-│   │   └── pid_tune_assist.cpp
-│   ├── opcontrol.cpp
-│   ├── odometry.cpp
-│   ├── main.cpp
-│   ├── deprecated_auton
-│   │   ├── blue_right.cpp
-│   │   └── blue_left.cpp
-│   ├── auxilliary_control.cpp
-│   ├── auton_selector
-│   │   └── auton_selector.cpp
-│   └── auton_programs
-│       ├── sixty_second.cpp
-│       ├── red_right.cpp
-│       ├── red_left.cpp
-│       ├── no_risk_auton_programs.cpp
-│       ├── map_selector_functions_and_logic.cpp
-│       ├── blue_right.cpp
-│       └── blue_left.cpp
-├── pid_tune_assist
+│   ├── pid_tune_assist
+│   │   └── pid_tune_assist.cpp
+│   ├── opcontrol.cpp
+│   ├── odometry.cpp
+│   ├── main.cpp
+│   ├── deprecated_auton
+│   │   ├── blue_right.cpp
+│   │   └── blue_left.cpp
+│   ├── auxilliary_control.cpp
+│   ├── auton_selector
+│   │   └── auton_selector.cpp
+│   └── auton_programs
+│       ├── sixty_second.cpp
+│       ├── red_right.cpp
+│       ├── red_left.cpp
+│       ├── no_risk_auton_programs.cpp
+│       ├── map_selector_functions_and_logic.cpp
+│       ├── blue_right.cpp
+│       └── blue_left.cpp
 ├── logstorage
-│   ├── build_history.log
-│   ├── March_04_21_04_43_2025
-│   │   ├── main.cpp.o
-│   │   ├── hot.package.elf
-│   │   ├── hot.package.bin
-│   │   ├── cold.package.elf
-│   │   ├── cold.package.bin
-│   │   ├── changes.log
-│   │   ├── auton_selector
-│   │   │   └── auton_selector.cpp.o
-│   │   └── _pros_ld_timestamp.o
-│   └── March_04_20_57_39_2025
-├── hard
-│   ├── pid_tune_assist
-│   ├── deprecated_auton
-│   └── auton_programs
-├── deprecated_auton
-└── auton_programs
+│   ├── build_history.log
+│   └── March_04_21_07_05_2025
+│       ├── main.cpp.o
+│       ├── hot.package.elf
+│       ├── hot.package.bin
+│       ├── cold.package.elf
+│       ├── cold.package.bin
+│       ├── changes.log
+│       ├── auton_selector
+│       │   └── auton_selector.cpp.o
+│       └── _pros_ld_timestamp.o
+└── hard
+    ├── pid_tune_assist
+    ├── deprecated_auton
+    └── auton_programs
 
-17 directories, 24 files
+13 directories, 24 files
 ```
 ## Usage
 
