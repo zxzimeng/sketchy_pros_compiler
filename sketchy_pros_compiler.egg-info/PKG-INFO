@@ -1,3 +1,22 @@
+Metadata-Version: 2.2
+Name: sketchy_pros_compiler
+Version: 1.0.1
+Summary: A build system wrapper for PROS robotics projects
+Home-page: https://github.com/zxzimeng/sketchy_pros_compiler
+Author: Zimeng Xiong
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: MacOS
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+Dynamic: author
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: requires-python
+Dynamic: summary
+
 # Sketchy PROS Compiler Wrapper
 
 A build system wrapper for PROS robotics projects that provides file change tracking, build logging, and binary backups.

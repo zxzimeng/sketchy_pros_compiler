@@ -1,0 +1,8 @@
+README.md
+pros_sketchy
+pyproject.toml
+setup.py
+sketchy_pros_compiler.egg-info/PKG-INFO
+sketchy_pros_compiler.egg-info/SOURCES.txt
+sketchy_pros_compiler.egg-info/dependency_links.txt
+sketchy_pros_compiler.egg-info/top_level.txt

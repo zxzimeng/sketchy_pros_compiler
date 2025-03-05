@@ -1,0 +1,169 @@
+#!/bin/bash
+
+ROOT_DIR="$(pwd)"
+TEMP_DIR=~/tmp/sketchycompiler/hard
+SOFT_STORAGE=~/tmp/sketchycompiler/softstorage
+LOG_STORAGE=~/tmp/sketchycompiler/logstorage
+TIMESTAMP=$(date '+%B_%d_%H_%M_%S_%Y')
+CURRENT_LOG_DIR="${LOG_STORAGE}/${TIMESTAMP}"
+BUILD_LOG="${LOG_STORAGE}/build_history.log"
+
+mkdir -p "${CURRENT_LOG_DIR}"
+mkdir -p "${LOG_STORAGE}"
+touch "${BUILD_LOG}"
+
+if [ ! -f "${ROOT_DIR}/project.pros" ]; then
+    echo "Error: Not a PROS project directory (project.pros not found)"
+    exit 1
+fi
+
+rm -rf "${TEMP_DIR}"
+mkdir -p "${TEMP_DIR}"
+mkdir -p "${SOFT_STORAGE}"
+
+show_changes() {
+    echo -e "\033[1;34m=== Changes since last compilation ===\033[0m"
+    if [ -d "${SOFT_STORAGE}" ]; then
+        FOUND_CHANGES=0
+        for file in $(find "${ROOT_DIR}/src" -type f -name "*.cpp" ! -path "*/auton_selector/*"); do
+            rel_path=${file#"${ROOT_DIR}/src/"}
+            if [ -f "${SOFT_STORAGE}/${rel_path}" ]; then
+                if ! cmp -s "${file}" "${SOFT_STORAGE}/${rel_path}"; then
+                    FOUND_CHANGES=1
+                    echo -e "\n\033[1;36m=== File: ${rel_path} ===\033[0m"
+                    diff --color=always -U3 "${SOFT_STORAGE}/${rel_path}" "${file}" | \
+                    sed '1,2d' | \
+                    sed 's/^+/\x1b[32m+/;s/^-/\x1b[31m-/;s/$/\x1b[0m/'
+                fi
+            else
+                FOUND_CHANGES=1
+                echo -e "\n\033[1;32m=== New File: ${rel_path} ===\033[0m"
+                if command -v bat &> /dev/null; then
+                    bat --color=always --style=plain --language=cpp "${file}"
+                else
+                    echo -e "\033[32m$(cat "${file}")\033[0m"
+                fi
+            fi
+        done
+        
+        if [ $FOUND_CHANGES -eq 0 ]; then
+            echo -e "\033[33mNo changes detected in any files\033[0m"
+        fi
+    else
+        echo -e "\033[33mFirst compilation - no previous files to compare against\033[0m"
+    fi
+}
+
+show_changes
+
+rm -rf "${SOFT_STORAGE}"
+mkdir -p "${SOFT_STORAGE}"
+cd "${ROOT_DIR}/src"
+find . -type f -name "*.cpp" -exec bash -c '
+    mkdir -p "$1/$(dirname "$2")"
+    cp "$2" "$1/$2"
+' _ "${SOFT_STORAGE}" {} \;
+cd "${ROOT_DIR}"
+
+touch "${TEMP_DIR}/main2.cpp"
+
+# Find all .cpp files except main.cpp and auton_selector files and concatenate them
+find "${ROOT_DIR}/src" -type f -name "*.cpp" ! -name "main.cpp" ! -path "*/auton_selector/*" | while read -r file; do
+    cat "$file" >> "${TEMP_DIR}/main2.cpp"
+    echo -e "\n" >> "${TEMP_DIR}/main2.cpp"
+done
+
+# Add main.cpp at the end
+cat "${ROOT_DIR}/src/main.cpp" >> "${TEMP_DIR}/main2.cpp"
+
+# Move all source files except main2.cpp and auton_selector files to tmp/sketchycompiler
+cd "${ROOT_DIR}/src"
+find . -type f ! -path "*/auton_selector/*" -exec bash -c 'mkdir -p "$1/$(dirname "$2")"; mv "$2" "$1/$2"' _ "${TEMP_DIR}" {} \;
+cd "${ROOT_DIR}"
+
+# Move the concatenated file back to src
+mv "${TEMP_DIR}/main2.cpp" "${ROOT_DIR}/src/main.cpp"
+
+# Add colorful divider before build
+echo -e "\n\033[1;35m════════════════════════════════════════════════════════════════\033[0m"
+echo -e "\033[1;36m                      PROS Build Output                           \033[0m"
+echo -e "\033[1;35m════════════════════════════════════════════════════════════════\033[0m\n"
+
+# Run pros make and capture output
+echo -e "\n[${TIMESTAMP}] Build Started" >> "${BUILD_LOG}"
+echo -e "Working Directory: ${ROOT_DIR}\n" >> "${BUILD_LOG}"
+pros --no-analytics make 2>&1 | tee -a "${BUILD_LOG}"
+BUILD_STATUS=$?
+if [ $BUILD_STATUS -eq 0 ]; then
+    echo -e "\nBuild Status: Success" >> "${BUILD_LOG}"
+    # Copy binary files after successful build
+    if [ -d "${ROOT_DIR}/bin" ]; then
+        cp -r "${ROOT_DIR}/bin/"* "${CURRENT_LOG_DIR}/"
+        echo -e "Binary files backed up to: ${CURRENT_LOG_DIR}" >> "${BUILD_LOG}"
+    else
+        echo -e "No binary files found in ${ROOT_DIR}/bin" >> "${BUILD_LOG}"
+    fi
+else
+    echo -e "\nBuild Status: Failed (Exit Code: ${BUILD_STATUS})" >> "${BUILD_LOG}"
+fi
+echo -e "----------------------------------------\n" >> "${BUILD_LOG}"
+
+# Move all original files back to src while preserving structure
+cd "${TEMP_DIR}"
+find . -type f -exec bash -c '
+    file_path="${2#./}"
+    mkdir -p "$1/src/$(dirname "$file_path")"
+    mv "$2" "$1/src/$file_path"
+' _ "${ROOT_DIR}" {} \;
+cd "${ROOT_DIR}"
+
+# Remove the concatenated main file
+rm -f "${ROOT_DIR}/src/main2.cpp"
+
+echo "Compilation complete and files restored successfully."
+
+# Show final changes
+echo -e "\n\033[1;35m════════════════════════════════════════════════════════════════\033[0m"
+echo -e "\033[1;36m                      Final File Status                           \033[0m"
+echo -e "\033[1;35m════════════════════════════════════════════════════════════════\033[0m\n"
+show_changes
+
+# Log changes with timestamp
+CHANGES_LOG="${CURRENT_LOG_DIR}/changes.log"
+echo -e "\n[${TIMESTAMP}]\n" >> "${CHANGES_LOG}"
+if [ $FOUND_CHANGES -eq 0 ]; then
+    echo "No changes detected" >> "${CHANGES_LOG}"
+else
+    for file in $(find "${ROOT_DIR}/src" -type f -name "*.cpp" ! -path "*/auton_selector/*"); do
+        rel_path=${file#"${ROOT_DIR}/src/"}
+        if [ -f "${SOFT_STORAGE}/${rel_path}" ]; then
+            if ! cmp -s "${file}" "${SOFT_STORAGE}/${rel_path}"; then
+                echo -e "\n=== ${rel_path} ===" >> "${CHANGES_LOG}"
+                diff -U3 "${SOFT_STORAGE}/${rel_path}" "${file}" >> "${CHANGES_LOG}"
+            fi
+        else
+            echo -e "\n=== New File: ${rel_path} ===" >> "${CHANGES_LOG}"
+            cat "${file}" >> "${CHANGES_LOG}"
+        fi
+    done
+fi
+
+# Remove the old sketchycompiler.log reference since we're now using per-directory logs
+LOG_FILE=~/tmp/.sketchycompiler.log
+echo -e "\n[$(date '+%Y-%m-%d %H:%M:%S')]\n" >> "${LOG_FILE}"
+if [ $FOUND_CHANGES -eq 0 ]; then
+    echo "No changes detected" >> "${LOG_FILE}"
+else
+    for file in $(find "${ROOT_DIR}/src" -type f -name "*.cpp" ! -path "*/auton_selector/*"); do
+        rel_path=${file#"${ROOT_DIR}/src/"}
+        if [ -f "${SOFT_STORAGE}/${rel_path}" ]; then
+            if ! cmp -s "${file}" "${SOFT_STORAGE}/${rel_path}"; then
+                echo -e "\n=== ${rel_path} ===" >> "${LOG_FILE}"
+                diff -U3 "${SOFT_STORAGE}/${rel_path}" "${file}" >> "${LOG_FILE}"
+            fi
+        else
+            echo -e "\n=== New File: ${rel_path} ===" >> "${LOG_FILE}"
+            cat "${file}" >> "${LOG_FILE}"
+        fi
+    done
+fi
