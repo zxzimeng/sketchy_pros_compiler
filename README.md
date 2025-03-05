@@ -66,10 +66,10 @@ Binary size: 6728KB (bin/hot.package.elf)
 
 ## Usage
 
-After installing to path, run from within a PROS project directory:
+After installing to path, run from within a PROS project directory to build:
 
 ```bash
-sketchy_pros_compiler
+pros_sketchy
 ```
 
 The script will:
